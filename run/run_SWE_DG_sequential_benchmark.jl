@@ -19,4 +19,4 @@ solver_params = Dict(
         :tableau => :SDIRK_3_3,   # Butcher tableau for the time-stepping scheme (e.g., SDIRK_3_3 for a 3-stage, 3rd-order SDIRK method)
         :Δit => 10)               # Print info every Δit time steps
 
-GridapSWE.run_sequential_benchmark(:DG, dom_params, solver_params)
+GridapSWE.run_sequential_benchmark(:DG, dom_params, solver_params, output=true)

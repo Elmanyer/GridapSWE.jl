@@ -116,8 +116,8 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
                 tn_str = @sprintf("%.4f", tn_round)
                 pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str"* ".vtu", cellfields=["u" => Uhn] ; append=false)
             end
+            next_sol = iterate(Uh, state)
         end 
-        next_sol = iterate(Uh)
     end
 
     # Close when finished
@@ -172,6 +172,7 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
                 normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, state, odeop, Uₕ, Ω, dΩ)
 
                 # Print info
+                tn_round = round(tn, digits=4)
                 if i_am_main(ranks) 
                     @printf(io, "%-8d %-12.4f %-18.8e %-18.8e %-18.8e\n", it, tn_round, normUn, Uh_rel_L2error, Uh_L2error)
                     flush(io)
@@ -182,8 +183,8 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
                 tn_str = @sprintf("%.4f", tn_round)
                 pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str", cellfields=["u" => Uhn] ; append=false)
             end
+            next_sol = iterate(Uh, state)
         end 
-        next_sol = iterate(Uh)
     end
 
     # Close when finished

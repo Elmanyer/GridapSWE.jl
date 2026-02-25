@@ -54,7 +54,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     # Create output directory
     if output
         Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
-        output_dir = "output/SWE_fullboundary_CG_SUPG_benchmark_Δx_$(Δx)_output"
+        output_dir = "output/SWE_fullboundary_$(scheme)_benchmark_Δx_$(Δx)_output"
         if !isdir(output_dir)
             mkpath(output_dir)
         end
@@ -139,7 +139,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
 
         if output 
             Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
-            output_dir = "output/SWE_fullboundary_CG_SUPG_benchmark_Δx_$(Δx)_output"
+            output_dir = "output/SWE_fullboundary_$(scheme)_benchmark_Δx_$(Δx)_output"
             if i_am_main(ranks) && !isdir(output_dir)
                 mkpath(output_dir)
             end
