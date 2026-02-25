@@ -41,12 +41,12 @@ end
 l2(u,dΩ) = sqrt(sum( ∫( u⊙u )*dΩ )) 
 
 
-function compute_residual_error(tn,  Ua, ∂tUa, Uh, odeop, Uₕ, dΩ)
+function compute_residual_error(tn,  Ua, ∂tUa, Uh, state, odeop, Uₕ, Ω, dΩ)
     # function to compute problem residual and l2 error norms
     ∂tUa_n = interpolate(∂tUa(tn), Uₕ(tn))
     coeffs∂tUa_n = get_free_dof_values(∂tUa_n)
 
-    coeffs = (Uh[2][2][1], coeffs∂tUa_n)
+    coeffs = (state[2][2][1], coeffs∂tUa_n)
     odeopcache = allocate_odeopcache(odeop, tn, coeffs)
     odeopcache = update_odeopcache!(odeopcache, odeop, tn)
 
@@ -58,7 +58,7 @@ function compute_residual_error(tn,  Ua, ∂tUa, Uh, odeop, Uₕ, dΩ)
     ΔU = Ua(tn) - Uh       # solution error
     L2error = l2(ΔU, dΩ)
     # Compute relative error
-    rel_L2error = L2error / l2(Ua(tn), dΩ)
+    rel_L2error = L2error / l2(CellField(Ua(tn), Ω), dΩ)
 
     return normUn, L2error, rel_L2error
 end
@@ -93,17 +93,18 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
         pvd[0] = createvtk(Ω, "$out_dir/sol_t_0.0000"* ".vtu", cellfields=["u" => Uh0]; append=false)
 
         #### Iterating through time steps
-        local Uhn, tn
-        next_sol = 0  
-        while !isnothing(next_sol)
+        local Uhn, tn, state
+        # Start the iteration
+        next_sol = iterate(Uh)
+        # Iterate until end of iterator
+        while next_sol !== nothing
             # Update values
             it += 1
-            next_sol = iterate(Uh)
-            tn, Uhn = next_sol 
+            (tn, Uhn), state = next_sol 
             # Compute and print residual and errors every Δit time steps
             if it % Δit == 0 || it == 1
                 # Compute residual and errors
-                normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, odeop, Uₕ, dΩ)
+                normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, state, odeop, Uₕ, Ω, dΩ)
 
                 # Print info
                 tn_round = round(tn, digits=4)
@@ -116,6 +117,7 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
                 pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str"* ".vtu", cellfields=["u" => Uhn] ; append=false)
             end
         end 
+        next_sol = iterate(Uh)
     end
 
     # Close when finished
@@ -127,6 +129,7 @@ end
 
 function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, Δit)
     # Input: 
+    #   - ranks -> MPI ranks for distributed environment
     #   - out_dir -> output directory for vtk files and convergence data
     #   - Ua -> analytical solution function Ua(x,t)
     #   - ∂tUa -> time derivative of the analytical solution function ∂t
@@ -155,17 +158,18 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
         pvd[0] = createvtk(Ω, "$out_dir/sol_t_0.0000", cellfields=["u" => Uh0]; append=false)
 
         #### Iterating through time steps
-        local Uhn, tn
-        next_sol = 0  
-        while !isnothing(next_sol)
+        local Uhn, tn, state
+        # Start the iteration
+        next_sol = iterate(Uh)
+        # Iterate until end of iterator
+        while next_sol !== nothing
             # Update values
             it += 1
-            next_sol = iterate(Uh)
-            tn, Uhn = next_sol 
+            (tn, Uhn), state = next_sol 
             # Compute and print residual and errors every Δit time steps
             if it % Δit == 0 || it == 1
                 # Compute residual and errors
-                normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, odeop, Uₕ, dΩ)
+                normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, state, odeop, Uₕ, Ω, dΩ)
 
                 # Print info
                 if i_am_main(ranks) 
@@ -179,6 +183,7 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
                 pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str", cellfields=["u" => Uhn] ; append=false)
             end
         end 
+        next_sol = iterate(Uh)
     end
 
     # Close when finished

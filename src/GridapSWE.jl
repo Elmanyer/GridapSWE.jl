@@ -107,14 +107,16 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     # Iterate without writing output
     else
         # Loop until the end of the iterator
-        local UhF, tF
-        next_sol = 0 
-        while !isnothing(next_sol)
-            next_sol = iterate(Uh)
-            tF, UhF = next_sol 
+        local UhF, tF, state
+        # Start the iteration
+        next_sol = iterate(Uh)
+        # Iterate until end of iterator
+        while next_sol !== nothing 
+            (tF, UhF), state = next_sol 
+            next_sol = iterate(Uh, state)
         end
         # Print final solution residu and L2 error
-        normUn, L2error, rel_L2error = compute_residual_error(tF,  Ua, ∂tUa, UhF, odeop, Uₕ, dΩ)
+        normUn, L2error, rel_L2error = compute_residual_error(tF,  Ua, ∂tUa, UhF, state, odeop, Uₕ, Ω, dΩ)
         println("GridapSWE --| End time: $tF  | Residu = $normUn | L2 Rel Error: $rel_L2error | L2 Error: $L2error" )
     end
     return nothing
@@ -196,14 +198,16 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
         # Iterate without writing output
         else
             # Loop until the end of the iterator
-            local UhF, tF
-            next_sol = 0 
-            while !isnothing(next_sol)
-                next_sol = iterate(Uh)
-                tF, UhF = next_sol 
+            local UhF, tF, state
+            # Start the iteration
+            next_sol = iterate(Uh)
+            # Iterate until end of iterator
+            while next_sol !== nothing 
+                (tF, UhF), state = next_sol 
+                next_sol = iterate(Uh, state)
             end
             # Print final solution residu and L2 error
-            normUn, L2error, rel_L2error = compute_residual_error(tF,  Ua, ∂tUa, UhF, odeop, Uₕ, dΩ)
+            normUn, L2error, rel_L2error = compute_residual_error(tF,  Ua, ∂tUa, UhF, state, odeop, Uₕ, Ω, dΩ)
             if i_am_main(ranks)
                 println("GridapSWE --| End time: $tF | Residu = $normUn | L2 Rel Error: $rel_L2error | L2 Error: $L2error" )
             end
