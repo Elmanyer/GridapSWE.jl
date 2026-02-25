@@ -40,6 +40,30 @@ end
 # L2 error
 l2(u,dΩ) = sqrt(sum( ∫( u⊙u )*dΩ )) 
 
+
+function compute_residual_error(tn,  Ua, ∂tUa, Uh, odeop, Uₕ, dΩ)
+    # function to compute problem residual and l2 error norms
+    ∂tUa_n = interpolate(∂tUa(tn), Uₕ(tn))
+    coeffs∂tUa_n = get_free_dof_values(∂tUa_n)
+
+    coeffs = (Uh[2][2][1], coeffs∂tUa_n)
+    odeopcache = allocate_odeopcache(odeop, tn, coeffs)
+    odeopcache = update_odeopcache!(odeopcache, odeop, tn)
+
+    # Compute residual
+    RUn = residual(odeop, tn, coeffs, odeopcache)
+    normUn = norm(RUn)
+
+    # Compute L2 error
+    ΔU = Ua(tn) - Uh       # solution error
+    L2error = l2(ΔU, dΩ)
+    # Compute relative error
+    rel_L2error = L2error / l2(Ua(tn), dΩ)
+
+    return normUn, L2error, rel_L2error
+end
+
+
 # Write iterative solution and compute errors and residuals
 function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, Δit)
     # Input: 
@@ -60,7 +84,7 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
     mkpath("$out_dir")
     io = open("$out_dir/convergence_data.csv", "w")
     # Print the header
-    @printf(io, "%-8s %-12s %-18s %-18s %-18s\n", "Step", "Time", "Residu", "Uh_L2_Rel_Err", "Uh_L2_Err")
+    @printf(io, "%-8s %-12s %-18s %-18s %-18s\n", "Step", "Time", "Residu", "L2_Rel_Err", "L2_Err")
 
     # VTK file writing environment
     createpvd("$out_dir/sol_nl") do pvd
@@ -69,51 +93,28 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
         pvd[0] = createvtk(Ω, "$out_dir/sol_t_0.0000"* ".vtu", cellfields=["u" => Uh0]; append=false)
 
         #### Iterating through time steps
-        # Get the first step
-        # iterate(iter) returns ( (time, solution), state )
-        next_val = iterate(Uh)
-
-        # Loop until the end of the iterator
-        while next_val !== nothing
-            # Update counter
+        local Uhn, tn
+        next_sol = 0  
+        while !isnothing(next_sol)
+            # Update values
             it += 1
-            # Unwrap time and solution from the iterator
-            (tn, Uhn), state = next_val
-            tn_round = round(tn, digits=4)
+            next_sol = iterate(Uh)
+            tn, Uhn = next_sol 
             # Compute and print residual and errors every Δit time steps
             if it % Δit == 0 || it == 1
-                # Extract solution and time derivative coefficients vectors
-                # Solution coefficients: state[2][2][1]
-                # state[2][2][1] == get_free_dof_values(uhn) -> true
-
-                ∂tUa_n = interpolate(∂tUa(tn), Uₕ(tn))
-                coeffs∂tUa_n = get_free_dof_values(∂tUa_n)
-
-                coeffs = (state[2][2][1], coeffs∂tUa_n)
-                odeopcache = allocate_odeopcache(odeop, tn, coeffs)
-                odeopcache = update_odeopcache!(odeopcache, odeop, tn)
-
-                # Compute residual
-                RUn = residual(odeop, tn, coeffs, odeopcache)
-                normUn = norm(RUn)
-
-                # Compute L2 error
-                ΔU = Ua(tn) - Uhn       # solution error
-                Uh_L2error = l2(ΔU, dΩ)
-                # Compute relative error
-                Uh_rel_error = Uh_L2error / l2(Uhn, dΩ)
+                # Compute residual and errors
+                normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, odeop, Uₕ, dΩ)
 
                 # Print info
-                @printf(io, "%-8d %-12.4f %-18.8e %-18.8e %-18.8e\n", it, tn_round, normUn, Uh_rel_error, Uh_L2error)
+                tn_round = round(tn, digits=4)
+                @printf(io, "%-8d %-12.4f %-18.8e %-18.8e %-18.8e\n", it, tn_round, normUn, Uh_rel_L2error, Uh_L2error)
                 flush(io)
-                println("GridapSWE --| Step $it | Time $tn_round | Residu = $normUn | Uh L2 Rel Error: $Uh_rel_error | Uh L2 Error: $Uh_L2error" )
+                println("GridapSWE --| Step $it | Time $tn_round | Residu = $normUn | L2 Rel Error: $Uh_rel_L2error | L2 Error: $Uh_L2error" )
 
                 # Save vtk file with iteration solution
                 tn_str = @sprintf("%.4f", tn_round)
                 pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str"* ".vtu", cellfields=["u" => Uhn] ; append=false)
             end
-            # Advance the iterator
-            next_val = iterate(Uh, state)
         end 
     end
 
@@ -143,7 +144,7 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
         mkpath("$out_dir")
         io = open("$out_dir/convergence_data.csv", "w")
         # Print the header
-        @printf(io, "%-8s %-12s %-18s %-18s %-18s\n", "Step", "Time", "Residu", "Uh_L2_Rel_Err", "Uh_L2_Err")
+        @printf(io, "%-8s %-12s %-18s %-18s %-18s\n", "Step", "Time", "Residu", "L2_Rel_Err", "L2_Err")
     end
     MPI.Barrier(MPI.COMM_WORLD)
 
@@ -152,6 +153,78 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
     
         # Save initial solution
         pvd[0] = createvtk(Ω, "$out_dir/sol_t_0.0000", cellfields=["u" => Uh0]; append=false)
+
+        #### Iterating through time steps
+        local Uhn, tn
+        next_sol = 0  
+        while !isnothing(next_sol)
+            # Update values
+            it += 1
+            next_sol = iterate(Uh)
+            tn, Uhn = next_sol 
+            # Compute and print residual and errors every Δit time steps
+            if it % Δit == 0 || it == 1
+                # Compute residual and errors
+                normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, odeop, Uₕ, dΩ)
+
+                # Print info
+                if i_am_main(ranks) 
+                    @printf(io, "%-8d %-12.4f %-18.8e %-18.8e %-18.8e\n", it, tn_round, normUn, Uh_rel_L2error, Uh_L2error)
+                    flush(io)
+                    println("GridapSWE --| Step $it | Time $tn_round | Residu = $normUn | L2 Rel Error: $Uh_rel_L2error | L2 Error: $Uh_L2error" )
+                end
+
+                # Save vtk file with iteration solution
+                tn_str = @sprintf("%.4f", tn_round)
+                pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str", cellfields=["u" => Uhn] ; append=false)
+            end
+        end 
+    end
+
+    # Close when finished
+    if i_am_main(ranks) 
+        close(io)
+    end
+
+    return nothing
+end
+
+
+
+
+
+
+
+#######################################################################
+
+
+# Write iterative solution and compute errors and residuals
+function write_transient_solution_sequential_old(out_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, Δit)
+    # Input: 
+    #   - out_dir -> output directory for vtk files and convergence data
+    #   - Ua -> analytical solution function Ua(x,t)
+    #   - ∂tUa -> time derivative of the analytical solution function ∂t
+    #   - odeop -> algebraic operator of the problem
+    #   - Uh0 -> initial FE solution
+    #   - Uh -> transient FE solution iterator
+    #   - Ω -> FE domain
+    #   - dΩ -> FE measure
+    #   - Uₕ -> FE space
+    #   - Δit -> print info every Δit time steps
+
+    it = 0
+    
+    # Open convergence file
+    mkpath("$out_dir")
+    io = open("$out_dir/convergence_data.csv", "w")
+    # Print the header
+    @printf(io, "%-8s %-12s %-18s %-18s %-18s\n", "Step", "Time", "Residu", "L2_Rel_Err", "L2_Err")
+
+    # VTK file writing environment
+    createpvd("$out_dir/sol_nl") do pvd
+    
+        # Save initial solution
+        pvd[0] = createvtk(Ω, "$out_dir/sol_t_0.0000"* ".vtu", cellfields=["u" => Uh0]; append=false)
 
         #### Iterating through time steps
         # Get the first step
@@ -171,6 +244,8 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
                 # Solution coefficients: state[2][2][1]
                 # state[2][2][1] == get_free_dof_values(uhn) -> true
 
+                normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uh, odeop, Uₕ,dΩ)
+
                 ∂tUa_n = interpolate(∂tUa(tn), Uₕ(tn))
                 coeffs∂tUa_n = get_free_dof_values(∂tUa_n)
 
@@ -186,18 +261,16 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
                 ΔU = Ua(tn) - Uhn       # solution error
                 Uh_L2error = l2(ΔU, dΩ)
                 # Compute relative error
-                Uh_rel_error = Uh_L2error / l2(Uhn, dΩ)
+                Uh_rel_L2error = Uh_L2error / l2(Uhn, dΩ)
 
                 # Print info
-                if i_am_main(ranks) 
-                    @printf(io, "%-8d %-12.4f %-18.8e %-18.8e %-18.8e\n", it, tn_round, normUn, Uh_rel_error, Uh_L2error)
-                    flush(io)
-                    println("GridapSWE --| Step $it | Time $tn_round | Residu = $normUn | Uh L2 Rel Error: $Uh_rel_error | Uh L2 Error: $Uh_L2error" )
-                end
+                @printf(io, "%-8d %-12.4f %-18.8e %-18.8e %-18.8e\n", it, tn_round, normUn, Uh_rel_L2error, Uh_L2error)
+                flush(io)
+                println("GridapSWE --| Step $it | Time $tn_round | Residu = $normUn | L2 Rel Error: $Uh_rel_L2error | L2 Error: $Uh_L2error" )
 
                 # Save vtk file with iteration solution
                 tn_str = @sprintf("%.4f", tn_round)
-                pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str", cellfields=["u" => Uhn] ; append=false)
+                pvd[tn] = createvtk(Ω, "$out_dir/sol_t_$tn_str"* ".vtu", cellfields=["u" => Uhn] ; append=false)
             end
             # Advance the iterator
             next_val = iterate(Uh, state)
@@ -205,9 +278,7 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
     end
 
     # Close when finished
-    if i_am_main(ranks) 
-        close(io)
-    end
-
+    close(io)
+    
     return nothing
 end

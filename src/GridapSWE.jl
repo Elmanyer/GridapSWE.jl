@@ -107,24 +107,17 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     # Iterate without writing output
     else
         # Loop until the end of the iterator
-        local UhF = nothing
-        local tF = 0.0
-        for (tn, Uhn) in Uh
-            tF = tn
-            UhF = Uhn
+        local UhF, tF
+        next_sol = 0 
+        while !isnothing(next_sol)
+            next_sol = iterate(Uh)
+            tF, UhF = next_sol 
         end
-
-        # Final solution L2 error
-        ΔU = Ua(tF) - UhF       
-        Uh_L2error = l2(ΔU, dΩ)
-        # Compute relative error
-        Uh_rel_error = Uh_L2error / l2(UhF, dΩ)
-        println("GridapSWE --| End time: $tF  | Uh L2 Rel Error: $Uh_rel_error | Uh L2 Error: $Uh_L2error" )
+        # Print final solution residu and L2 error
+        normUn, L2error, rel_L2error = compute_residual_error(tF,  Ua, ∂tUa, UhF, odeop, Uₕ, dΩ)
+        println("GridapSWE --| End time: $tF  | Residu = $normUn | L2 Rel Error: $rel_L2error | L2 Error: $L2error" )
     end
     return nothing
-
-    
-    #main_SWE_CG_SUPG_sequential_benchmark(dom_params, solver_params, Ua, ∂tUa, Smms, output_dir=output_dir)
 end
 
 # Main function for distributed execution
@@ -203,24 +196,21 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
         # Iterate without writing output
         else
             # Loop until the end of the iterator
-            local UhF = nothing
-            local tF = 0.0
-            for (tn, Uhn) in Uh
-                tF = tn
-                UhF = Uhn
+            local UhF, tF
+            next_sol = 0 
+            while !isnothing(next_sol)
+                next_sol = iterate(Uh)
+                tF, UhF = next_sol 
             end
-            
-            # Final solution L2 error
-            ΔU = Ua(tF) - UhF       
-            Uh_L2error = l2(ΔU, dΩ)
-            # Compute relative error
-            Uh_rel_error = Uh_L2error / l2(UhF, dΩ)
+            # Print final solution residu and L2 error
+            normUn, L2error, rel_L2error = compute_residual_error(tF,  Ua, ∂tUa, UhF, odeop, Uₕ, dΩ)
             if i_am_main(ranks)
-                println("GridapSWE --| End time: $tF | Uh L2 Rel Error: $Uh_rel_error | Uh L2 Error: $Uh_L2error" )
+                println("GridapSWE --| End time: $tF | Residu = $normUn | L2 Rel Error: $rel_L2error | L2 Error: $L2error" )
             end
         end
         
     end
+    return nothing
 end
 
 end # module GridapSWE

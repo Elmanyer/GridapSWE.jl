@@ -1,6 +1,9 @@
 
 using GridapSWE
 
+# command to execute:
+# mpiexecjl -n 4 julia --project=. run/run_SWE_CG_SUPG_distributed_benchmark.jl
+
 dom_params = Dict(
         :Lx => 1.0,              # Domain x-axis length
         :Ly => 1.0,              # Domain y-axis length
@@ -21,4 +24,4 @@ solver_params = Dict(
         :nls_maxiter => 1000,     # Maximum number of iterations for the nonlinear solver
         :Δit => 10)               # Print info every Δit time steps
 
-GridapSWE.run_distributed(dom_params, solver_params, (2,2), output=true)
+GridapSWE.run_distributed_benchmark(:CG_SUPG, dom_params, solver_params, (2,2), output=true)
