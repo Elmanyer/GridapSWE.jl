@@ -97,21 +97,22 @@ function SWE_DG_formulation(model, reffe, Ug, Source, degree)
     dΛ = Measure(Λ,degree)
 
     ######## WEAK FORMULATION ########
-    invdF_Γ = 1.0 ./ CellField(get_cell_measure(Γ),Γ)
-    invdF_Λ = 1.0 ./ CellField(get_cell_measure(Λ),Λ)
-    #λ = order * (order + 1.0)
-    λ = 10.0
+    foo, h_Γ = get_mesh_sizes(Γ)
+    foo, h_Λ = get_mesh_sizes(Λ)
+    order = reffe[2][2]
+    λ = order * (order + 1.0)
+    #λ = 10.0
 
     # Weak Form Bulk terms
     A_Ω(t, u, v) = ∫( v.⁺⋅∂t(u.⁺) - ∇(v.⁺)' ⊙ (F∘u.⁺) )dΩ 
     B_Ω(t, v) = ∫( v.⁺⋅(Source(t)) )dΩ
 
     # Weak Form Boundary terms
-    A_Γ(t, u, v) = ∫( 0.5 * (v.⁺⋅((F∘u.⁺)⋅nΓ)) + (λ * invdF_Γ * u.⁺⋅v.⁺) )dΓ  
-    B_Γ(t, v)    = ∫( - 0.5 * (v.⁺⋅((F∘Ug(t))⋅nΓ)) + (λ * invdF_Γ * Ug(t)⋅v.⁺) )dΓ
+    A_Γ(t, u, v) = ∫( 0.5 * (v.⁺⋅((F∘u.⁺)⋅nΓ)) + (λ * (1.0 ./ h_Γ) * u.⁺⋅v.⁺) )dΓ  
+    B_Γ(t, v)    = ∫( - 0.5 * (v.⁺⋅((F∘Ug(t))⋅nΓ)) + (λ * (1.0 ./ h_Γ) * Ug(t)⋅v.⁺) )dΓ
 
     # Weak Form Interior facets terms
-    A_Λ(t, u, v) = ∫( ( jump(v)⋅(0.5 * (F∘u.⁺ + F∘u.⁻) ⋅ nΛ.⁺) ) + (λ * invdF_Λ * jump(v)⋅jump(u)) )dΛ 
+    A_Λ(t, u, v) = ∫( ( jump(v)⋅(0.5 * (F∘u.⁺ + F∘u.⁻) ⋅ nΛ.⁺) ) + (λ * (1.0 ./ h_Λ) * jump(v)⋅jump(u)) )dΛ 
 
     # Residual weak form
     res(t,u,v) = A_Ω(t,u,v) + A_Γ(t,u,v) + A_Λ(t,u,v) - (B_Ω(t,v) + B_Γ(t,v))
