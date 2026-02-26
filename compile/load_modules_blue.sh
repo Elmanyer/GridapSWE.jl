@@ -1,6 +1,5 @@
 
-module load 2022r2 openmpi intel-mkl
+module load 2024r1 slurm openmpi julia
 
 export JULIA_MPI_BINARY=system
-export JULIA_MPI_PATH=/mnt/shared/apps/2022r2/compute/linux-rhel8-skylake_avx512/gcc-8.5.0/openmpi-4.1.1-urzuzcvzrdedifi3mm527t4wgiisuvld
-export JULIA_MPIEXEC=srun
+export JULIA_MPI_PATH=/apps/arch/2024r1/software/linux-rhel8-cascadelake/gcc-11.3.0/openmpi-4.1.6-w6w5qi5ljesbctyoojlfialbynqt25jb/bin
