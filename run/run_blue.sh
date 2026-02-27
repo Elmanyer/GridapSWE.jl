@@ -1,16 +1,16 @@
 #!/bin/bash
 
-#SBATCH --job-name="runcase_GridapSWE"
+#SBATCH --job-name="GridapSWE_dx"
 #SBATCH --partition=compute
-#SBATCH --time=24:00:00
-#SBATCH --ntasks-per-node=4
+#SBATCH --time=48:00:00
+#SBATCH --ntasks-per-node=16
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=4G
+#SBATCH --mem-per-cpu=3900M
 #SBATCH --output=GridapSWE.%j.out
 #SBATCH --error=GridapSWE.%j.err
 
 source ../compile/load_modules_blue.sh
 
-script=run_SWE_CG_SUPG_distributed_benchmark.jl
+script="../run/run_SWE_dx_convergence.jl"
 
-srun -n 4 julia --project=../ -J ../GridapSWE_sysimage.so -e 'using MPI; MPI.Init(); include("$script"); MPI.Finalize()'
+mpiexecjl -n 16 julia --project=../ -J ../GridapSWE_sysimage.so $script

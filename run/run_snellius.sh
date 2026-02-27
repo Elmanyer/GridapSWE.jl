@@ -8,8 +8,8 @@
 #SBATCH --output=GridapSWE.%j.out
 #SBATCH --error=GridapSWE.%j.err
 
-source ../compile/load_modules_snellius.sh
+#source ../compile/load_modules_snellius.sh
 
-script=run_SWE_CG_SUPG_distributed_benchmark.jl
+script="run_SWE_CG_SUPG_distributed_benchmark.jl"
 
-srun -n 4 julia --project=../ -J ../GridapSWE_sysimage.so -e 'using MPI; MPI.Init(); include("$script"); MPI.Finalize()'
+mpiexecjl -n 4 julia --project=../ -J ../GridapSWE_sysimage.so $script
