@@ -101,8 +101,8 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     ############# ITERATE #############
     # Iterate through the solution and compute errors, residuals, and save vtk files
     if !isnothing(output_dir)
-        solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tf_$(solver_params[:tF])_Δt_$(solver_params[:Δt])"
-        write_transient_solution_sequential(solution_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, solver_params[:Δit])
+        solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tF_$(solver_params[:tF])_Δt_$(solver_params[:Δt])"
+        write_transient_solution_sequential(solution_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, solver_params[:Δit], solver_params[:tF])
     
     # Iterate without writing output
     else
@@ -192,8 +192,8 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
         ############# ITERATE #############
         # Iterate through the solution and compute errors, residuals, and save vtk files
         if !isnothing(output_dir)
-            solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tf_$(solver_params[:tF])_Δt_$(solver_params[:Δt])"
-            write_transient_solution_distributed(ranks, solution_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, solver_params[:Δit])
+            solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tF_$(solver_params[:tF])_Δt_$(solver_params[:Δt])"
+            write_transient_solution_distributed(ranks, solution_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, solver_params[:Δit], solver_params[:tF])
 
         # Iterate without writing output
         else

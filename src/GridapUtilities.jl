@@ -65,7 +65,7 @@ end
 
 
 # Write iterative solution and compute errors and residuals
-function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, Δit)
+function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, Δit, tF)
     # Input: 
     #   - out_dir -> output directory for vtk files and convergence data
     #   - Ua -> analytical solution function Ua(x,t)
@@ -77,7 +77,7 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
     #   - dΩ -> FE measure
     #   - Uₕ -> FE space
     #   - Δit -> print info every Δit time steps
-
+    #   - tF -> final time
     it = 0
     
     # Open convergence file
@@ -102,7 +102,7 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
             it += 1
             (tn, Uhn), state = next_sol 
             # Compute and print residual and errors every Δit time steps
-            if it % Δit == 0 || it == 1
+            if it % Δit == 0 || it == 1 || tn == tF
                 # Compute residual and errors
                 normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, state, odeop, Uₕ, Ω, dΩ)
 
@@ -118,6 +118,7 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
             end
             next_sol = iterate(Uh, state)
         end 
+
     end
 
     # Close when finished
@@ -127,7 +128,7 @@ function write_transient_solution_sequential(out_dir, Ua, ∂tUa, odeop, Uh0, Uh
 end
 
 
-function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, Δit)
+function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, Δit, tF)
     # Input: 
     #   - ranks -> MPI ranks for distributed environment
     #   - out_dir -> output directory for vtk files and convergence data
@@ -167,7 +168,7 @@ function write_transient_solution_distributed(ranks, out_dir, Ua, ∂tUa, odeop,
             it += 1
             (tn, Uhn), state = next_sol 
             # Compute and print residual and errors every Δit time steps
-            if it % Δit == 0 || it == 1
+            if it % Δit == 0 || it == 1 || tn == tF
                 # Compute residual and errors
                 normUn, Uh_L2error, Uh_rel_L2error = compute_residual_error(tn, Ua, ∂tUa, Uhn, state, odeop, Uₕ, Ω, dΩ)
 
