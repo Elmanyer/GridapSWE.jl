@@ -48,6 +48,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     #   - dom_params -> dictionary of domain parameters (Lx, Ly, Nx, Ny)
     #   - solver_params -> dictionary of solver parameters (Δt, t0, tF, tableau)
 
+    # Print run configuration
     Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
     println("GridapSWE --| Running SWE benchmark with:")
     println("GridapSWE --|    · Sequential execution")
@@ -138,6 +139,10 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
     #   - cpu_grid -> tuple with the grid of distributed processes (e.g., (2,3) for a 2x3 grid)
 
     with_mpi() do distribute
+        # Get the distributed ranks for the current process
+        ranks = distribute(LinearIndices((prod(cpu_grid),)))
+
+        # Print run configuration on the main rank
         if i_am_main(ranks)
             Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
             println("GridapSWE --| Running SWE benchmark with:")
@@ -149,9 +154,6 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
 
         # Get benchmark case configuration
         Ua, ∂tUa, Smms = benchmark_config()
-
-        # Get the distributed ranks for the current process
-        ranks = distribute(LinearIndices((prod(cpu_grid),)))
 
         if output 
             Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
