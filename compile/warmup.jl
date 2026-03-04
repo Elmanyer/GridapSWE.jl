@@ -35,20 +35,14 @@ solver_params_dis = Dict(
         :nls_maxiter => 1000)     # Maximum number of iterations for the nonlinear solver
 
 println("GridapSWE --|   -> Running sequential benchmark...")
-println("GridapSWE --|       - Run CG scheme...")
 GridapSWE.run_sequential_benchmark(:CG, dom_params, solver_params_seq)
-println("GridapSWE --|       - Run CG_SUPG scheme...")
 GridapSWE.run_sequential_benchmark(:CG_SUPG, dom_params, solver_params_seq)
-println("GridapSWE --|       - Run DG scheme...")
 GridapSWE.run_sequential_benchmark(:DG, dom_params, solver_params_seq)
 println("GridapSWE --|   Done!")
 
 println("GridapSWE --|   -> Running distributed benchmark...")
-println("GridapSWE --|       - Run CG scheme...")
 GridapSWE.run_distributed_benchmark(:CG, dom_params, solver_params_dis, (1,1))
-println("GridapSWE --|       - Run CG_SUPG scheme...")
 GridapSWE.run_distributed_benchmark(:CG_SUPG, dom_params, solver_params_dis, (1,1))
-println("GridapSWE --|       - Run DG scheme...")
 GridapSWE.run_distributed_benchmark(:DG, dom_params, solver_params_dis, (1,1))
 println("GridapSWE --|   Done!")
 

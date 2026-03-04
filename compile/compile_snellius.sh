@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name="compile_GridapSWE"
-#SBATCH --partition=memory
+#SBATCH --partition=himem_4tb
 #SBATCH --time=16:00:00
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
@@ -9,6 +9,6 @@
 #SBATCH --output=GridapSWE.%j.out
 #SBATCH --error=GridapSWE.%j.err
 
-#source load_modules_blue.sh
+source load_modules_snellius.sh
 
-mpiexecjl -n 1 julia --project=../ compile.jl
+julia --project=../ compile.jl
