@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name="compile_GridapSWE"
-#SBATCH --partition=himem_4tb
+#SBATCH --partition=rome
 #SBATCH --time=16:00:00
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
