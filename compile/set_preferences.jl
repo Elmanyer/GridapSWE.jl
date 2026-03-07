@@ -4,9 +4,18 @@ using Pkg
 # Set MPIPreferences to use the system MPI binary
 #MPIPreferences.use_system_binary()
 ### DelftBlue
-#MPIPreferences.use_system_binary(library_names=["/apps/arch/2024r1/software/linux-rhel8-cascadelake/gcc-11.3.0/openmpi-4.1.6-w6w5qi5ljesbctyoojlfialbynqt25jb/lib/libmpi.so"])
+mpi_lib_dir = "/apps/arch/2024r1/software/linux-rhel8-cascadelake/gcc-11.3.0/openmpi-4.1.6-w6w5qi5ljesbctyoojlfialbynqt25jb/lib/"
+
 ### Snellius
-MPIPreferences.use_system_binary(library_names=["/sw/arch/RHEL9/EB_production/2024/software/OpenMPI/5.0.3-GCC-13.3.0/lib/libmpi.so"])
+#mpi_lib_dir = "/sw/arch/RHEL9/EB_production/2024/software/OpenMPI/5.0.3-GCC-13.3.0/lib/"
+
+MPIPreferences.use_system_binary(
+    library_names=[
+        joinpath(mpi_lib_dir, "libmpi.so"),
+        joinpath(mpi_lib_dir, "libmpi_mpifh.so"),
+        joinpath(mpi_lib_dir, "libmpi_usempif08.so")
+    ]
+)
 
 # Add specific branches of Gridap and GridapDistributed and GridapSolvers
 Pkg.add([PackageSpec(name="Gridap", rev="distributed_AD_transient"),

@@ -5,6 +5,11 @@
 # or in parallel
 # mpiexecjl -n 6 julia --project=. -J TS_SWE_sysimage.so script_to_run.jl
 
+using MPI
+if !MPI.Initialized()
+    MPI.Init()
+end
+
 using GridapSWE
 
 println("GridapSWE --| Running warmup for the GridapSWE module...")

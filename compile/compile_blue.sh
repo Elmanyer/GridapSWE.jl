@@ -11,4 +11,4 @@
 
 source load_modules_blue.sh
 
-julia --project=../ compile.jl
+mpiexecjl -n 1 julia --project=../ compile.jl
