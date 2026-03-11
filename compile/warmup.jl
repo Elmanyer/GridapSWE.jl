@@ -22,13 +22,13 @@ dom_params = Dict(
         
 # Solver parameters
 solver_params_seq = Dict(
-        :Δt => 0.001,             # Time step size
+        :dt => 0.001,             # Time step size
         :t0 => 0.0,               # Initial time
         :tF => 0.001,             # Final time
         :tableau => :SDIRK_3_3)   # Butcher tableau for the time-stepping scheme (e.g., SDIRK_3_3 for a 3-stage, 3rd-order SDIRK method)
 
 solver_params_dis = Dict(
-        :Δt => 0.001,             # Time step size
+        :dt => 0.001,             # Time step size
         :t0 => 0.0,               # Initial time
         :tF => 0.001,             # Final time
         :tableau => :SDIRK_3_3,   # Butcher tableau for the time-stepping scheme (e.g., SDIRK_3_3 for a 3-stage, 3rd-order SDIRK method)

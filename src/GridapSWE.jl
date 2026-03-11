@@ -46,23 +46,23 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     # Input:
     #   - scheme -> numerical scheme to solve the SWE
     #   - dom_params -> dictionary of domain parameters (Lx, Ly, Nx, Ny)
-    #   - solver_params -> dictionary of solver parameters (Δt, t0, tF, tableau)
+    #   - solver_params -> dictionary of solver parameters (dt, t0, tF, tableau)
 
     # Print run configuration
-    Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
+    dx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
     println("GridapSWE --| Running SWE benchmark with:")
     println("GridapSWE --|    · Sequential execution")
     println("GridapSWE --|    · $(scheme) scheme")
-    println("GridapSWE --|    · Δx = $Δx")
-    println("GridapSWE --|    · Δt = $(solver_params[:Δt])")
+    println("GridapSWE --|    · dx = $dx")
+    println("GridapSWE --|    · dt = $(solver_params[:dt])")
 
     # Get benchmark case configuration
     Ua, ∂tUa, Smms = benchmark_config()
 
     # Create output directory
     if output
-        Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
-        output_dir = "output/SWE_benchmark_$(scheme)_Δx_$(Δx)_out"
+        dx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
+        output_dir = "output/SWE_benchmark_$(scheme)_dx_$(dx)_out"
         if !isdir(output_dir)
             mkpath(output_dir)
         end
@@ -101,7 +101,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     ############## SOLVER #############
     lin_solver = LUSolver()
     nl_solver = NLSolver(lin_solver, method=:newton, iterations=20, show_trace=false)
-    solver = RungeKutta(nl_solver, lin_solver, solver_params[:Δt], solver_params[:tableau])
+    solver = RungeKutta(nl_solver, lin_solver, solver_params[:dt], solver_params[:tableau])
     Uh0 = interpolate_everywhere(Ua(solver_params[:t0]), Uₕ(solver_params[:t0]))
 
     Uh = solve(solver, op, solver_params[:t0], solver_params[:tF], Uh0)
@@ -109,7 +109,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     ############# ITERATE #############
     # Iterate through the solution and compute errors, residuals, and save vtk files
     if !isnothing(output_dir)
-        solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tF_$(solver_params[:tF])_Δt_$(solver_params[:Δt])"
+        solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tF_$(solver_params[:tF])_dt_$(solver_params[:dt])"
         write_transient_solution_sequential(solution_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, solver_params[:Δit], solver_params[:tF])
     
     # Iterate without writing output
@@ -135,7 +135,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
     # Input:
     #   - scheme -> numerical scheme to solve the SWE
     #   - dom_params -> dictionary of domain parameters (Lx, Ly, Nx, Ny)
-    #   - solver_params -> dictionary of solver parameters (Δt, t0, tF, tableau)
+    #   - solver_params -> dictionary of solver parameters (dt, t0, tF, tableau)
     #   - cpu_grid -> tuple with the grid of distributed processes (e.g., (2,3) for a 2x3 grid)
 
     with_mpi() do distribute
@@ -144,20 +144,20 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
 
         # Print run configuration on the main rank
         if i_am_main(ranks)
-            Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
+            dx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
             println("GridapSWE --| Running SWE benchmark with:")
             println("GridapSWE --|    · Distributed execution (CPU grid: $(cpu_grid))")
             println("GridapSWE --|    · $(scheme) scheme")
-            println("GridapSWE --|    · Δx = $Δx")
-            println("GridapSWE --|    · Δt = $(solver_params[:Δt])")
+            println("GridapSWE --|    · dx = $dx")
+            println("GridapSWE --|    · dt = $(solver_params[:dt])")
         end
 
         # Get benchmark case configuration
         Ua, ∂tUa, Smms = benchmark_config()
 
         if output 
-            Δx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
-            output_dir = "output/SWE_benchmark_$(scheme)_Δx_$(Δx)_out"
+            dx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
+            output_dir = "output/SWE_benchmark_$(scheme)_dx_$(dx)_out"
             if i_am_main(ranks) && !isdir(output_dir)
                 mkpath(output_dir)
             end
@@ -202,7 +202,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
         lin_solver = GMRESSolver(1000,Pr=JacobiLinearSolver(),atol=solver_params[:ls_atol],rtol=solver_params[:ls_rtol],maxiter=solver_params[:ls_maxiter],verbose=false)
         nl_solver = NewtonSolver(lin_solver, maxiter=solver_params[:nls_maxiter],atol=solver_params[:nls_atol],rtol=solver_params[:nls_rtol],verbose=false)
 
-        solver = RungeKutta(nl_solver, lin_solver, solver_params[:Δt], solver_params[:tableau])
+        solver = RungeKutta(nl_solver, lin_solver, solver_params[:dt], solver_params[:tableau])
         Uh0 = interpolate_everywhere(Ua(solver_params[:t0]), Uₕ(solver_params[:t0]))
 
         Uh = solve(solver, op, solver_params[:t0], solver_params[:tF], Uh0)
@@ -210,7 +210,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
         ############# ITERATE #############
         # Iterate through the solution and compute errors, residuals, and save vtk files
         if !isnothing(output_dir)
-            solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tF_$(solver_params[:tF])_Δt_$(solver_params[:Δt])"
+            solution_dir = output_dir * "/solver_" * string(solver_params[:tableau]) * "_tF_$(solver_params[:tF])_dt_$(solver_params[:dt])"
             write_transient_solution_distributed(ranks, solution_dir, Ua, ∂tUa, odeop, Uh0, Uh, Ω, dΩ, Uₕ, solver_params[:Δit], solver_params[:tF])
 
         # Iterate without writing output

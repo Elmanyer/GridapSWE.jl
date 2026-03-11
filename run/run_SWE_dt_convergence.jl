@@ -10,7 +10,7 @@ dom_params = Dict(
 
 # Solver parameters
 solver_params = Dict(
-        :Δt => 0.001,             # Time step size
+        :dt => 0.001,             # Time step size
         :t0 => 0.0,               # Initial time
         :tF => 0.1,               # Final time
         :tableau => :SDIRK_3_3,   # Butcher tableau for the time-stepping scheme (e.g., SDIRK_3_3 for a 3-stage, 3rd-order SDIRK method)
@@ -23,12 +23,12 @@ solver_params = Dict(
         :Δit => 10)               # Print info every Δit time steps
 
 
-println("GridapSWE --| Running SWE benchmark for convergence study with varying Δt and polynomial order p...")
+println("GridapSWE --| Running SWE benchmark for convergence study with varying dt and polynomial order p...")
 for p in [1, 2, 3, 4]
 println("GridapSWE --|    · Polynomial order p = $p")
-        for Δt in [0.05, 0.01, 1e-3, 1e-4]
-                println("GridapSWE --|       · Time step Δt = $Δt")
-                solver_params[:Δt] = Δt
+        for dt in [0.05, 0.01, 1e-3, 1e-4]
+                println("GridapSWE --|       · Time step dt = $dt")
+                solver_params[:dt] = dt
 
                 # Continuous Galerkin without stabilization
                 println("GridapSWE --|          · Run CG scheme...")

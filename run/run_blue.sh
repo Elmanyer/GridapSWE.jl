@@ -11,4 +11,4 @@
 
 source $HOME/GridapSWE.jl/compile/load_modules_blue.sh
 
-mpiexecjl -n 16 julia --project=$HOME/GridapSWE.jl -J ../GridapSWE_sysimage.so run_SWE_CG_SUPG_distributed_benchmark.jl
+mpiexecjl -n 16 julia --project=$HOME/GridapSWE.jl run_SWE_CG_SUPG_distributed_benchmark.jl

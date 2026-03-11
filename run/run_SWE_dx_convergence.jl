@@ -10,7 +10,7 @@ dom_params = Dict(
 
 # Solver parameters
 solver_params = Dict(
-        :Δt => 0.001,             # Time step size
+        :dt => 0.001,             # Time step size
         :t0 => 0.0,               # Initial time
         :tF => 0.01,              # Final time
         :tableau => :SDIRK_3_3,   # Butcher tableau for the time-stepping scheme (e.g., SDIRK_3_3 for a 3-stage, 3rd-order SDIRK method)
@@ -22,11 +22,11 @@ solver_params = Dict(
         :nls_maxiter => 1000,     # Maximum number of iterations for the nonlinear solver
         :Δit => 10)               # Print info every Δit time steps
 
-println("GridapSWE --| Running SWE benchmark for convergence study with varying Δx and polynomial order p...")
+println("GridapSWE --| Running SWE benchmark for convergence study with varying dx and polynomial order p...")
 for p in [1, 2, 3, 4]
         println("GridapSWE --|    · Polynomial order p = $p")
         for N in [8, 16, 32, 64, 128, 256]
-                println("GridapSWE --|       · Domain divisions N = $N (Δx = $(round(dom_params[:Lx] / N, digits=4)))")
+                println("GridapSWE --|       · Domain divisions N = $N (dx = $(round(dom_params[:Lx] / N, digits=4)))")
                 dom_params[:Nx] = N
                 dom_params[:Ny] = N
 
