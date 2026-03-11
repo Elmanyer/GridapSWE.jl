@@ -23,25 +23,14 @@ solver_params = Dict(
         :Δit => 10)               # Print info every Δit time steps
 
 
-println("GridapSWE --| Running SWE benchmark for convergence study with varying dt and polynomial order p...")
 for p in [1, 2, 3, 4]
-println("GridapSWE --|    · Polynomial order p = $p")
         for dt in [0.05, 0.01, 1e-3, 1e-4]
-                println("GridapSWE --|       · Time step dt = $dt")
                 solver_params[:dt] = dt
-
                 # Continuous Galerkin without stabilization
-                println("GridapSWE --|          · Run CG scheme...")
                 GridapSWE.run_distributed_benchmark(:CG, dom_params, solver_params, (4,4), output=true, order=p)
-                println("GridapSWE --|") 
                 # Continuous Galerkin with SUPG stabilization
-                println("GridapSWE --|          · Run CG_SUPG scheme...")
                 GridapSWE.run_distributed_benchmark(:CG_SUPG, dom_params, solver_params, (4,4), output=true, order=p)
-                println("GridapSWE --|")
                 # Discontinuous Galerkin
-                println("GridapSWE --|          · Run DG scheme...")
                 GridapSWE.run_distributed_benchmark(:DG, dom_params, solver_params, (4,4), output=true, order=p)
-                println("GridapSWE --|")
         end
-        println("GridapSWE --|")
 end

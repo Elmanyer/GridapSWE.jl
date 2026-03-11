@@ -54,7 +54,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     println("GridapSWE --|    · Sequential execution")
     println("GridapSWE --|    · $(scheme) scheme")
     println("GridapSWE --|    · Element order p = $order")
-    println("GridapSWE --|    · dx = $dx")
+    println("GridapSWE --|    · dx = $dx (Nx = $(dom_params[:Nx]))")
     println("GridapSWE --|    · dt = $(solver_params[:dt])")
 
     # Get benchmark case configuration
@@ -150,7 +150,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
             println("GridapSWE --|    · Distributed execution (CPU grid: $(cpu_grid))")
             println("GridapSWE --|    · $(scheme) scheme")
             println("GridapSWE --|    · Element order p = $order")
-            println("GridapSWE --|    · dx = $dx")
+            println("GridapSWE --|    · dx = $dx (Nx = $(dom_params[:Nx]))")
             println("GridapSWE --|    · dt = $(solver_params[:dt])")
         end
 
