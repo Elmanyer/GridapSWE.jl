@@ -53,6 +53,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     println("GridapSWE --| Running SWE benchmark with:")
     println("GridapSWE --|    · Sequential execution")
     println("GridapSWE --|    · $(scheme) scheme")
+    println("GridapSWE --|    · Element order p = $order")
     println("GridapSWE --|    · dx = $dx")
     println("GridapSWE --|    · dt = $(solver_params[:dt])")
 
@@ -62,7 +63,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     # Create output directory
     if output
         dx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
-        output_dir = "output/SWE_benchmark_$(scheme)_dx_$(dx)_out"
+        output_dir = "output/SWE_benchmark_$(scheme)_p$(order)_dx_$(dx)_out"
         if !isdir(output_dir)
             mkpath(output_dir)
         end
@@ -148,6 +149,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
             println("GridapSWE --| Running SWE benchmark with:")
             println("GridapSWE --|    · Distributed execution (CPU grid: $(cpu_grid))")
             println("GridapSWE --|    · $(scheme) scheme")
+            println("GridapSWE --|    · Element order p = $order")
             println("GridapSWE --|    · dx = $dx")
             println("GridapSWE --|    · dt = $(solver_params[:dt])")
         end
@@ -157,7 +159,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
 
         if output 
             dx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
-            output_dir = "output/SWE_benchmark_$(scheme)_dx_$(dx)_out"
+            output_dir = "output/SWE_benchmark_$(scheme)_p$(order)_dx_$(dx)_out"
             if i_am_main(ranks) && !isdir(output_dir)
                 mkpath(output_dir)
             end
