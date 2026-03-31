@@ -27,10 +27,10 @@ for p in [1, 2, 3, 4]
         for dt in [0.05, 0.01, 1e-3, 1e-4]
                 solver_params[:dt] = dt
                 # Continuous Galerkin without stabilization
-                GridapSWE.run_distributed_benchmark(:CG, dom_params, solver_params, cpu_grid, output=true, order=p)
+                GridapSWE.run_distributed_benchmark(:sinusoidal, :CG, dom_params, solver_params, cpu_grid, output=true, order=p)
                 # Continuous Galerkin with SUPG stabilization
-                GridapSWE.run_distributed_benchmark(:CG_SUPG, dom_params, solver_params, cpu_grid, output=true, order=p)
+                GridapSWE.run_distributed_benchmark(:sinusoidal, :CG_SUPG, dom_params, solver_params, cpu_grid, output=true, order=p)
                 # Discontinuous Galerkin
-                GridapSWE.run_distributed_benchmark(:DG, dom_params, solver_params, cpu_grid, output=true, order=p)
+                GridapSWE.run_distributed_benchmark(:sinusoidal, :DG, dom_params, solver_params, cpu_grid, output=true, order=p)
         end
 end

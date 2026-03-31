@@ -25,4 +25,4 @@ solver_params = Dict(
         :nls_maxiter => 1000,     # Maximum number of iterations for the nonlinear solver
         :Δit => 10)               # Print info every Δit time steps
 
-GridapSWE.run_distributed_benchmark(:CG, dom_params, solver_params, (2,2), output=true)
+GridapSWE.run_distributed_benchmark(:sinusoidal, :CG, dom_params, solver_params, (2,2), output=true)

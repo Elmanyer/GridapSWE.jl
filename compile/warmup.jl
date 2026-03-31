@@ -40,15 +40,15 @@ solver_params_dis = Dict(
         :nls_maxiter => 1000)     # Maximum number of iterations for the nonlinear solver
 
 println("GridapSWE --|   -> Running sequential benchmark...")
-GridapSWE.run_sequential_benchmark(:CG, dom_params, solver_params_seq)
-GridapSWE.run_sequential_benchmark(:CG_SUPG, dom_params, solver_params_seq)
-GridapSWE.run_sequential_benchmark(:DG, dom_params, solver_params_seq)
+GridapSWE.run_sequential_benchmark(:sinusoidal, :CG, dom_params, solver_params_seq)
+GridapSWE.run_sequential_benchmark(:sinusoidal, :CG_SUPG, dom_params, solver_params_seq)
+GridapSWE.run_sequential_benchmark(:sinusoidal, :DG, dom_params, solver_params_seq)
 println("GridapSWE --|   Done!")
 
 println("GridapSWE --|   -> Running distributed benchmark...")
-GridapSWE.run_distributed_benchmark(:CG, dom_params, solver_params_dis, (1,1))
-GridapSWE.run_distributed_benchmark(:CG_SUPG, dom_params, solver_params_dis, (1,1))
-GridapSWE.run_distributed_benchmark(:DG, dom_params, solver_params_dis, (1,1))
+GridapSWE.run_distributed_benchmark(:sinusoidal, :CG, dom_params, solver_params_dis, (1,1))
+GridapSWE.run_distributed_benchmark(:sinusoidal, :CG_SUPG, dom_params, solver_params_dis, (1,1))
+GridapSWE.run_distributed_benchmark(:sinusoidal, :DG, dom_params, solver_params_dis, (1,1))
 println("GridapSWE --|   Done!")
 
 println("GridapSWE --| Warmup completed for the GridapSWE module. The system image will now be created.")

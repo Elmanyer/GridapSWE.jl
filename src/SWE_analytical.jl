@@ -3,7 +3,7 @@
 # This file defines functions for simulating the shallow water equations using the method of manufactured solutions (MMS) in Gridap.
 
 # Fix simulation configuration and parameters
-function benchmark_config()
+function benchmark_config(sol::Symbol)
     
     # Benchmark case parameters:
     H0 = 10.0
@@ -11,8 +11,19 @@ function benchmark_config()
     V0 = 0.5
     A = 0.1     # Water depth perturbation amplitude (m)
     B = 0.05    # X-velocity perturbation amplitude (m/s)
-    C = 0.05
-    Ua, ∂tUa = get_U_analytical(H0, U0, V0, A, B, C)
+    C = 0.05    # Y-velocity perturbation amplitude (m/s)
+    ω = 1.0     # Temporal frequency (rad/s)
+    kx = 2π     # wavenumber in x direction (rad/m)
+    ky = 2π     # wavenumber in y direction (rad/m)
+
+    if sol == :polynomial
+        Ua, ∂tUa = get_U_analytical(H0, U0, V0, A, B, C)
+    elseif sol == :sinusoidal
+        Ua, ∂tUa = get_U_analytical_sin(H0, U0, V0, A, B, C, ω, kx, ky)
+    else
+        error("Unknown solution type: $sol. Use :polynomial or :sinusoidal.")
+    end
+
     Smms = get_Smms(Ua, ∂tUa, F)
     Ua_t(t) = x -> Ua(x,t)
     ∂tUa_t(t) = x -> ∂tUa(x,t)
@@ -23,7 +34,7 @@ end
 
 
 # Analytical manufactured solution
-function get_U_analytical(H0, U0, V0, A, B, C)
+function get_U_analytical_pol(H0, U0, V0, A, B, C)
     # Analytical solution
     Ua(x,t) = begin
         h = H0 + A * (x[1]^2 + x[2]^2) * (1 + t^2)
@@ -41,6 +52,28 @@ function get_U_analytical(H0, U0, V0, A, B, C)
         h_t = A * (x[1]^2 + x[2]^2) * (2*t)
         u_t = B * x[1] * x[2]
         v_t = C * (x[2] - x[1])
+        return VectorValue{Dof}(h_t, h_t*u_val + h_val*u_t, h_t*v_val + h_val*v_t)
+    end
+    return Ua, ∂tUa
+end
+
+function get_U_analytical_sin(H0, U0, V0, A, B, C, ω, kx, ky)
+    # Analytical solution
+    Ua(x,t) = begin
+        h = H0 + A * sin(ω * t) * sin(kx * x[1]) * sin(ky * x[2])
+        u = U0 + B * sin(ω * t) * cos(kx * x[1]) * cos(ky * x[2])
+        v = V0 + C * cos(ω * t) * sin(kx * x[1]) * cos(ky * x[2])
+        return VectorValue{Dof}(h, h*u, h*v)
+    end
+    # Time derivative of the analytical solution
+    ∂tUa(x,t) = begin
+        h_val = H0 + A * sin(ω * t) * sin(kx * x[1]) * sin(ky * x[2])
+        u_val = U0 + B * sin(ω * t) * cos(kx * x[1]) * cos(ky * x[2])
+        v_val = V0 + C * cos(ω * t) * sin(kx * x[1]) * cos(ky * x[2])
+
+        h_t = A * ω * cos(ω * t) * sin(kx * x[1]) * sin(ky * x[2])
+        u_t = B * ω * cos(ω * t) * cos(kx * x[1]) * cos(ky * x[2])
+        v_t = -C * ω * sin(ω * t) * sin(kx * x[1]) * cos(ky * x[2])
         return VectorValue{Dof}(h_t, h_t*u_val + h_val*u_t, h_t*v_val + h_val*v_t)
     end
     return Ua, ∂tUa

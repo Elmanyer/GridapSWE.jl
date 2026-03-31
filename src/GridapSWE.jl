@@ -42,8 +42,9 @@ include("SWE_WeakForm.jl")
 
 
 # Main function for sequential execution
-function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; output=false, order=3, degree=6)
+function run_sequential_benchmark(sol::Symbol, scheme::Symbol, dom_params, solver_params; output=false, order=3, degree=6)
     # Input:
+    #   - sol -> solution type (polynomial or sinusoidal)
     #   - scheme -> numerical scheme to solve the SWE
     #   - dom_params -> dictionary of domain parameters (Lx, Ly, Nx, Ny)
     #   - solver_params -> dictionary of solver parameters (dt, t0, tF, tableau)
@@ -58,7 +59,7 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
     println("GridapSWE --|    · dt = $(solver_params[:dt])")
 
     # Get benchmark case configuration
-    Ua, ∂tUa, Smms = benchmark_config()
+    Ua, ∂tUa, Smms = benchmark_config(sol)
 
     # Create output directory
     if output
@@ -132,8 +133,9 @@ function run_sequential_benchmark(scheme::Symbol, dom_params, solver_params; out
 end
 
 # Main function for distributed execution
-function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cpu_grid; output=false, order=3, degree=6)
+function run_distributed_benchmark(sol::Symbol, scheme::Symbol, dom_params, solver_params, cpu_grid; output=false, order=3, degree=6)
     # Input:
+    #   - sol -> solution type (polynomial or sinusoidal)
     #   - scheme -> numerical scheme to solve the SWE
     #   - dom_params -> dictionary of domain parameters (Lx, Ly, Nx, Ny)
     #   - solver_params -> dictionary of solver parameters (dt, t0, tF, tableau)
@@ -155,7 +157,7 @@ function run_distributed_benchmark(scheme::Symbol, dom_params, solver_params, cp
         end
 
         # Get benchmark case configuration
-        Ua, ∂tUa, Smms = benchmark_config()
+        Ua, ∂tUa, Smms = benchmark_config(sol)
 
         if output 
             dx = round(dom_params[:Lx] / dom_params[:Nx], digits=4)
