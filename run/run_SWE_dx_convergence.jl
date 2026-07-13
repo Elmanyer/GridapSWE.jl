@@ -27,11 +27,8 @@ for p in [1, 2, 3, 4]
         for N in [8, 16, 32, 64, 128]
                 dom_params[:Nx] = N
                 dom_params[:Ny] = N
-                # Continuous Galerkin without stabilization
-                GridapSWE.run_distributed_benchmark(:sinusoidal, :CG, dom_params, solver_params, cpu_grid, output=true, order=p) 
-                # Continuous Galerkin with SUPG stabilization
-                GridapSWE.run_distributed_benchmark(:sinusoidal, :CG_SUPG, dom_params, solver_params, cpu_grid, output=true, order=p)
-                # Discontinuous Galerkin
-                GridapSWE.run_distributed_benchmark(:sinusoidal, :DG, dom_params, solver_params, cpu_grid, output=true, order=p)
+                for scheme in [:CG, :CG_SUPG, :DG]
+                        GridapSWE.run_distributed_benchmark(:sinusoidal, scheme, dom_params, solver_params, cpu_grid, output=true, order=p) 
+                end
         end
 end
